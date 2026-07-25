@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+
+# Runtime / uploads (ExifTool temp files, local data)
+.tmp-uploads/
+uploads/
+data/
+*.db
+*.sqlite
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.dev.vars
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build / cache
+dist/
+build/
+.cache/
+.parcel-cache/
+.wrangler/
+.vite/
+
+# OS
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editors / IDEs
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Test / coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Misc
+*.tmp
+*.temp
+.temp/
+tmp/
+.turbo/

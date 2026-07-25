@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f766e" />
+  <title>Camera Trade Hub — Auckland</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div>
+      <h1>Camera Trade Hub</h1>
+      <p class="tagline">Auckland stores · Grade · Trade · Resell · Credit</p>
+    </div>
+    <div class="store-pill" id="activeStorePill">Select a store</div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button type="button" data-tab="trade" class="active">Trade-In</button>
+    <button type="button" data-tab="inventory">Inventory</button>
+    <button type="button" data-tab="credit">Credits</button>
+    <button type="button" data-tab="stripe">Stripe Connect</button>
+    <button type="button" data-tab="stores">Stores</button>
+    <button type="button" data-tab="police">Stolen / NZ</button>
+  </nav>
+
+  <main class="main">
+    <!-- TRADE -->
+    <section id="tab-trade" class="tab-panel active">
+      <h2>Grade &amp; trade gear</h2>
+      <form id="tradeForm" class="card">
+        <div class="grid-2">
+          <label>
+            Store
+            <select id="tradeStore" required></select>
+          </label>
+          <label>
+            Category
+            <select id="category">
+              <option value="body">Camera body</option>
+              <option value="lens">Lens</option>
+              <option value="flash">Flash / light</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <label>
+            Brand
+            <input id="brand" list="brandList" placeholder="Canon, Sony, Nikon…" required />
+            <datalist id="brandList">
+              <option value="Canon" /><option value="Sony" /><option value="Nikon" />
+              <option value="Fujifilm" /><option value="Panasonic" /><option value="Olympus" />
+              <option value="Leica" /><option value="Sigma" /><option value="Tamron" />
+            </datalist>
+          </label>
+          <label>
+            Model
+            <input id="model" placeholder="e.g. EOS R6, A7 IV, Z6 III" required />
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <label>
+            Retail / market value (NZD)
+            <input id="marketValue" type="number" min="1" step="1" placeholder="1200" required />
+          </label>
+          <label>
+            Condition grade
+            <select id="condition">
+              <option value="mint">Mint / Like new (95%)</option>
+              <option value="excellent" selected>Excellent (85%)</option>
+              <option value="good">Good (70%)</option>
+              <option value="fair">Fair (55%)</option>
+              <option value="poor">Poor / parts (35%)</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <label>
+            Serial number
+            <div class="inline-row">
+              <input id="serial" placeholder="SN…" autocomplete="off" />
+              <button type="button" class="btn secondary" id="btnStolenCheck">Check stolen</button>
+            </div>
+            <span id="stolenResult" class="hint"></span>
+            <div id="stolenPoliceActions" class="police-actions hidden"></div>
+          </label>
+          <label>
+            Shutter count (bodies)
+            <div class="inline-row">
+              <input id="shutterCount" type="number" min="0" step="1" placeholder="e.g. 42000" />
+              <label class="file-btn btn secondary">
+                EXIF
+                <input type="file" id="exifFile" accept="image/*,.NEF,.CR2,.CR3,.ARW,.RAF,.ORF,.RW2" hidden />
+              </label>
+            </div>
+            <span id="shutterHint" class="hint">Optional. Auto-depreciates by model tier. Upload a mechanical-shutter photo to read EXIF (server).</span>
+          </label>
+        </div>
+
+        <label>
+          Customer name / email
+          <input id="customer" placeholder="Alex / alex@email.com" required />
+        </label>
+
+        <label>
+          Notes
+          <textarea id="notes" rows="2" placeholder="Box, straps, fungus, fungus-free, etc."></textarea>
+        </label>
+
+        <fieldset class="payout-box">
+          <legend>Payout</legend>
+          <label class="radio"><input type="radio" name="payout" value="credit" checked /> Store credit (full trade offer)</label>
+          <label class="radio"><input type="radio" name="payout" value="cash" /> Cash via platform (3rd-party — fees apply)</label>
+        </fieldset>
+
+        <div id="offerPreview" class="offer-preview muted">Fill the form to preview offer…</div>
+
+        <div class="btn-row">
+          <button type="submit" class="btn" id="btnAcceptTrade">Accept trade</button>
+          <button type="button" class="btn ghost" id="btnResetTrade">Reset</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- INVENTORY -->
+    <section id="tab-inventory" class="tab-panel">
+      <h2>Inventory &amp; resale</h2>
+      <div class="toolbar">
+        <select id="invStoreFilter"></select>
+        <button type="button" class="btn secondary" id="btnListAll">List all for resale</button>
+      </div>
+      <div id="inventoryList" class="list"></div>
+    </section>
+
+    <!-- CREDITS -->
+    <section id="tab-credit" class="tab-panel">
+      <h2>Customer store credit</h2>
+      <div id="creditList" class="list"></div>
+    </section>
+
+    <!-- STRIPE -->
+    <section id="tab-stripe" class="tab-panel">
+      <h2>Stripe Connect <span class="badge">simulated</span></h2>
+      <div class="card">
+        <p class="muted">Express-style store accounts. Cash trades: platform fee <strong>5% + $0.50</strong>, remainder transferred to the store.</p>
+        <div class="btn-row">
+          <button type="button" class="btn" id="btnOnboardStore">Onboard selected store</button>
+          <button type="button" class="btn secondary" id="btnSimPayout">Simulate cash payout (latest trade)</button>
+        </div>
+        <h3>Connected accounts</h3>
+        <div id="stripeAccounts" class="list"></div>
+        <h3>Transfer history</h3>
+        <div id="transferList" class="list"></div>
+        <h3>Webhook simulator</h3>
+        <div class="btn-row wrap">
+          <button type="button" class="btn secondary" data-webhook="account.updated">account.updated</button>
+          <button type="button" class="btn secondary" data-webhook="transfer.created">transfer.created</button>
+          <button type="button" class="btn secondary" data-webhook="transfer.paid">transfer.paid</button>
+          <button type="button" class="btn secondary" data-webhook="payout.paid">payout.paid</button>
+          <button type="button" class="btn secondary" data-webhook="charge.succeeded">charge.succeeded</button>
+        </div>
+        <pre id="webhookLog" class="log"></pre>
+        <h3>Idempotency</h3>
+        <p class="muted">Keys prevent duplicate transfers for the same trade payout.</p>
+        <div id="idempotencyList" class="list"></div>
+      </div>
+    </section>
+
+    <!-- STORES -->
+    <section id="tab-stores" class="tab-panel">
+      <h2>Partner stores (Auckland)</h2>
+      <div id="storeCards" class="store-grid"></div>
+    </section>
+
+    <!-- STOLEN / NZ RESOURCES -->
+    <section id="tab-police" class="tab-panel">
+      <h2>Stolen goods — NZ resources</h2>
+      <div class="card">
+        <p class="muted">
+          There is <strong>no public NZ Police API</strong> to look up camera serial numbers.
+          Police publish public stolen lists for <em>vehicles</em> and <em>boats</em> only.
+          Serials matter for reports and for licensed secondhand dealers’ records.
+        </p>
+        <p class="muted">
+          Demo “Check stolen” uses a <strong>local mock list</strong> only.
+          Suspected stolen gear must be handled via official / commercial channels below — not this app alone.
+        </p>
+
+        <h3>SNAP (snap.org.nz) — decommissioned</h3>
+        <p class="muted">
+          <strong>SNAP</strong> (Serial Number Action Partnership) was a New Zealand Police initiative
+          (site since ~2002) where people could store serial numbers of belongings in case of theft.
+          Secondhand buyers/dealers could sometimes check serials against reported stolen property.
+        </p>
+        <p class="muted">
+          The <strong>SNAP website was turned off on 15 December 2021</strong>.
+          <code>snap.org.nz</code> is no longer an active Police service — do not build production
+          checks against it. Police instead recommend keeping your own records (e.g. photos of
+          serial plates and identifying marks) and reporting theft via <strong>105</strong>.
+        </p>
+        <ul class="link-list">
+          <li>
+            <a href="https://www.police.govt.nz/about-site-and-nz-police-app/other-sites/snap-decommissioning" target="_blank" rel="noopener noreferrer">
+              NZ Police — SNAP decommissioning notice
+            </a>
+          </li>
+          <li>
+            <span class="badge warn">Offline</span>
+            <a href="https://snap.org.nz/" target="_blank" rel="noopener noreferrer">snap.org.nz</a>
+            — historical URL only; site decommissioned.
+          </li>
+        </ul>
+
+        <h3>Best practice (Ecotechnologies / NZ)</h3>
+        <p class="muted">
+          Receiving stolen goods is an offence. Buy from people of good character or reputable organisations.
+          Anyone dealing in secondhand goods for more than six days a year generally needs a secondhand dealer licence.
+          Record model + serial, keep photos and receipts to prove ownership and aid recovery.
+        </p>
+        <ul class="link-list">
+          <li>
+            <a href="https://ecotechnologies.nz/resources/knowledge-base/stolen-goods/" target="_blank" rel="noopener noreferrer">
+              Ecotechnologies — Stolen goods knowledge base
+            </a>
+            — NZ summary of risk, serials, and external tools.
+          </li>
+          <li>
+            <a href="https://serisafe.com/" target="_blank" rel="noopener noreferrer">
+              SeriSafe
+            </a>
+            — commercial database to record serial numbers and check items reported stolen
+            (dealer / pawn-style workflows; contact provider for API access). Closest modern alternative to old SNAP-style serial registries.
+          </li>
+          <li>
+            <a href="http://www.stoleme.co.nz/" target="_blank" rel="noopener noreferrer">
+              Stole Me
+            </a>
+            — NZ stolen listings site (Ecotechnologies notes it may have little recent activity — verify before relying on it).
+          </li>
+          <li>
+            <a href="https://www.tcf.org.nz/consumers/mobile/lost-stolen-phones/check-your-handsets-status/" target="_blank" rel="noopener noreferrer">
+              TCF — check stolen phones (IMEI)
+            </a>
+            — New Zealand Telecommunications Forum handset status (phones, not cameras).
+          </li>
+        </ul>
+
+        <h3>Report &amp; Police guidance</h3>
+        <ul class="link-list">
+          <li>
+            <a href="https://www.police.govt.nz/faq/questions-by-category/lost-stolen-found-property" target="_blank" rel="noopener noreferrer">
+              Lost / stolen / found property FAQs
+            </a>
+          </li>
+          <li>
+            <a href="https://www.police.govt.nz/faq/it-worth-keeping-serial-numbers-case-property-lost-or-stolen" target="_blank" rel="noopener noreferrer">
+              Why keep serial numbers?
+            </a>
+            — Police advise recording unique serials on electronics.
+          </li>
+          <li>
+            <a href="https://www.police.govt.nz/use-105/stolen-property" target="_blank" rel="noopener noreferrer">
+              Report stolen property (105 Online)
+            </a>
+            — include make, model, distinguishing features, <strong>serial number</strong>.
+          </li>
+          <li>
+            <a href="https://webforms.police.govt.nz/en/form/stolen-property" target="_blank" rel="noopener noreferrer">
+              Stolen property web form
+            </a>
+          </li>
+          <li>
+            <a href="https://www.police.govt.nz/use-105/found-property" target="_blank" rel="noopener noreferrer">
+              Report found property
+            </a>
+          </li>
+          <li>
+            <a href="https://www.police.govt.nz/use-105/lost-property" target="_blank" rel="noopener noreferrer">
+              Report lost property
+            </a>
+          </li>
+          <li>
+            <a href="https://www.police.govt.nz/use-105" target="_blank" rel="noopener noreferrer">
+              105 non-emergency hub
+            </a>
+            · call <a href="tel:105">105</a> · emergency <a href="tel:111">111</a>
+          </li>
+        </ul>
+
+        <h3>Public “stolen” lookups (not cameras)</h3>
+        <ul class="link-list">
+          <li>
+            <a href="https://www.police.govt.nz/can-you-help-us/stolen-vehicles" target="_blank" rel="noopener noreferrer">
+              Check stolen vehicles
+            </a>
+          </li>
+          <li>
+            <a href="https://www.police.govt.nz/stolenwanted/stolen-boats" target="_blank" rel="noopener noreferrer">
+              Stolen boats
+            </a>
+          </li>
+        </ul>
+
+        <h3>Secondhand dealers (stores)</h3>
+        <p class="muted">
+          Licensed dealers under the <em>Secondhand Dealers and Pawnbrokers Act 2004</em> must keep dealers’ records
+          (seller ID, description, <strong>serial number</strong>, price, etc.) and report goods known or suspected stolen.
+          Items acquired typically must be held before resale (see Act / Police business guidance).
+        </p>
+        <ul class="link-list">
+          <li>
+            <a href="https://www.police.govt.nz/advice-services/businesses-and-organisations/secondhand-dealers-and-pawnbrokers/secondhand-dealers" target="_blank" rel="noopener noreferrer">
+              Police: secondhand dealers information
+            </a>
+          </li>
+          <li>
+            <a href="https://www.legislation.govt.nz/act/public/2004/70/latest/DLM312837.html" target="_blank" rel="noopener noreferrer">
+              Secondhand Dealers and Pawnbrokers Act 2004
+            </a>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
